@@ -1,0 +1,5 @@
+{
+  "name": "StoryTime Reader",
+  "description": "A mobile-first app that reads children's books out loud using Gemini Vision and ElevenLabs.",
+  "requestFramePermissions": ["camera", "microphone"]
+}
