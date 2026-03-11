@@ -77,9 +77,9 @@ const sendError = (res: express.Response, status: number, message: string, step:
     technical: technical instanceof Error ? technical.message : (typeof technical === 'object' ? JSON.stringify(technical, null, 2) : technical),
     timestamp: new Date().toISOString()
   };
-  
+
   console.error(`[Error] Step: ${step} | Message: ${message} | Details:`, errorDetails);
-  
+
   res.status(status).json({
     error: message,
     details: errorDetails
@@ -97,7 +97,7 @@ app.post("/api/analyze-page", async (req, res) => {
     }
 
     console.log("Received image, processing with Gemini...");
-    
+
     // Debug: Check if key exists
     if (!process.env.GEMINI_API_KEY) {
       return sendError(res, 500, "Gemini API Key is missing in server environment", "Configuration");
@@ -105,7 +105,7 @@ app.post("/api/analyze-page", async (req, res) => {
 
     // Step A: Vision (Gemini)
     let apiKey = process.env.GEMINI_API_KEY.trim();
-    
+
     // Sanitize key
     if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
       apiKey = apiKey.slice(1, -1);
@@ -128,9 +128,9 @@ app.post("/api/analyze-page", async (req, res) => {
     if (!apiKey.startsWith("AIza")) {
       console.warn("WARNING: Gemini API Key does not start with 'AIza'. Proceeding anyway, but this key might be invalid.");
     }
-    
+
     const ai = new GoogleGenAI({ apiKey });
-    
+
     // Detect mime type
     const mimeMatch = imageBase64.match(/^data:(image\/\w+);base64,/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
@@ -141,7 +141,7 @@ app.post("/api/analyze-page", async (req, res) => {
     const systemInstruction = `You are an expert children's book voice director. Read the text on this page and look at the illustrations. Break the text down into sequential dialogue and narrative blocks. Identify who is speaking (e.g., narrator, dragon, little_girl). Output ONLY a valid JSON array of objects matching this interface: { speaker: string; text: string; emotion: string; }.`;
 
     // Switch to the user-requested model
-    const modelName = "gemini-2.5-flash"; 
+    const modelName = "gemini-2.5-flash";
 
     try {
       const response = await ai.models.generateContent({
@@ -162,7 +162,7 @@ app.post("/api/analyze-page", async (req, res) => {
       if (!jsonText) {
         return sendError(res, 500, "Empty response from Gemini", "Gemini Analysis");
       }
-      
+
       // Clean Markdown code blocks if present
       const cleanJsonText = jsonText.replace(/```json\n?|\n?```/g, "").trim();
 
@@ -179,20 +179,20 @@ app.post("/api/analyze-page", async (req, res) => {
       res.json({ script });
 
     } catch (apiError: any) {
-       // Check for specific API errors
-       const isAuthError = apiError.message?.includes("API key") || apiError.status === 400 || apiError.status === 401;
-       const status = isAuthError ? 401 : 500;
-       const msg = isAuthError ? "Gemini API Key rejected" : "Gemini API call failed";
-       
-       // Add key debug info to the error response
-       const debugInfo = {
-         keyPrefix: keyPrefix,
-         keyLength: keyLength,
-         model: modelName,
-         originalError: apiError
-       };
+      // Check for specific API errors
+      const isAuthError = apiError.message?.includes("API key") || apiError.status === 400 || apiError.status === 401;
+      const status = isAuthError ? 401 : 500;
+      const msg = isAuthError ? "Gemini API Key rejected" : "Gemini API call failed";
 
-       return sendError(res, status, msg, "Gemini Analysis", debugInfo);
+      // Add key debug info to the error response
+      const debugInfo = {
+        keyPrefix: keyPrefix,
+        keyLength: keyLength,
+        model: modelName,
+        originalError: apiError
+      };
+
+      return sendError(res, status, msg, "Gemini Analysis", debugInfo);
     }
 
   } catch (error: any) {
@@ -211,7 +211,7 @@ app.post("/api/synthesize-audio", async (req, res) => {
     // Step B: Credit-Saving Cache
     const scriptHash = md5(JSON.stringify(script));
     const cachedFilePath = path.join(CACHE_DIR, `${scriptHash}.mp3`);
-    
+
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     const host = req.headers['x-forwarded-host'] || req.get('host');
     const cachedFileUrl = `${protocol}://${host}/cache/${scriptHash}.mp3`;
@@ -237,7 +237,7 @@ app.post("/api/synthesize-audio", async (req, res) => {
     for (const [index, block] of script.entries()) {
       const speakerKey = block.speaker.toLowerCase().replace(/\s+/g, "_");
       let voiceId = VOICE_MAPPING["default"];
-      
+
       if (VOICE_MAPPING[speakerKey]) {
         voiceId = VOICE_MAPPING[speakerKey];
       } else if (speakerKey.includes("dragon") || speakerKey.includes("monster")) {
@@ -304,15 +304,16 @@ app.post("/api/synthesize-audio", async (req, res) => {
 // --- Server Start ---
 async function startServer() {
   // Vite middleware for development (so the web preview works)
-  if (process.env.NODE_ENV !== "production") {
+  console.log("Initializing Vite server...");
+  try {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    // In production, serve static files from dist
-    app.use(express.static(path.join(__dirname, "dist")));
+    console.log("Vite middleware initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize Vite:", error);
   }
 
   app.listen(PORT, "0.0.0.0", () => {
