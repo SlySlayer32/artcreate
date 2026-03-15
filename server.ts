@@ -1,13 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
+dotenv.config({ path: ".env.local" });
 dotenv.config();
 
 const app = express();
 app.use(express.json({ limit: "25mb" }));
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+type SafeCallResult<T> =
+  | { success: true; data: T; errorMessage?: never }
+  | { success: false; data?: never; errorMessage: string };
 
 function structuredError(res, status, message, details = {}) {
   return res.status(status).json({
@@ -17,6 +22,47 @@ function structuredError(res, status, message, details = {}) {
       ...details,
     },
   });
+}
+
+async function safeCallGemini<T>(operation: () => Promise<T>): Promise<SafeCallResult<T>> {
+  try {
+    const data = await operation();
+    return { success: true, data };
+  } catch (error: any) {
+    const status = error?.status ?? error?.response?.status ?? null;
+    const message = error?.message ?? "Unknown Gemini error";
+    const responseBody =
+      error?.response?.data ??
+      error?.errorDetails ??
+      error?.body ??
+      error?.cause ??
+      null;
+
+    const serializedBody =
+      typeof responseBody === "string"
+        ? responseBody
+        : responseBody
+          ? JSON.stringify(responseBody)
+          : null;
+
+    console.error("Gemini API call failed", {
+      status,
+      message,
+      responseBody: serializedBody,
+      error,
+    });
+
+    return {
+      success: false,
+      errorMessage: [
+        status ? `Status ${status}` : null,
+        message,
+        serializedBody ? `Response: ${serializedBody}` : null,
+      ]
+        .filter(Boolean)
+        .join(" | "),
+    };
+  }
 }
 
 // Map emotion → ElevenLabs voice settings for expressive storytelling
@@ -96,8 +142,7 @@ app.post("/api/analyze-page", async (req, res) => {
     const mimeType = matches[1];
     const base64Data = matches[2];
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const prompt = `You are analyzing a children's storybook page to create a dramatic read-aloud script.
 
@@ -123,12 +168,38 @@ Example output:
 
 Now analyze the storybook page in the image and return the JSON array.`;
 
-    const result = await model.generateContent([
-      prompt,
-      { inlineData: { mimeType, data: base64Data } },
-    ]);
+    const result = await safeCallGemini(() =>
+      ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: base64Data } },
+            ],
+          },
+        ],
+      })
+    );
 
-    const rawText = result.response.text().trim();
+    if (!result.success) {
+      const errorMessage = result.errorMessage;
+      return structuredError(res, 502, "Gemini request failed", {
+        step: "analyze-page",
+        code: "GEMINI_ERROR",
+        technical: errorMessage,
+      });
+    }
+
+    const rawText = result.data.text?.trim();
+
+    if (!rawText) {
+      return structuredError(res, 502, "Gemini returned no text output", {
+        step: "analyze-page",
+        code: "EMPTY_GEMINI_RESPONSE",
+      });
+    }
 
     // Safely parse — strip any accidental markdown fences
     const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
@@ -155,7 +226,7 @@ Now analyze the storybook page in the image and return the JSON array.`;
     console.error("analyze-page error:", err);
     return structuredError(res, 500, "Failed to analyze the image", {
       step: "analyze-page",
-      code: "GEMINI_ERROR",
+      code: "ANALYZE_PAGE_ERROR",
       technical: err.message,
     });
   }

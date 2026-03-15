@@ -10,11 +10,11 @@ View your app in AI Studio: https://ai.studio/apps/a5df8be3-daf5-4668-8646-dd777
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set the `GEMINI_API_KEY` in `.env.local` or `.env`
 3. Run the app:
    `npm run dev`
+4. Open the app and upload a storybook image. The frontend proxies `/api/*` to the Express backend on port `3001`.
