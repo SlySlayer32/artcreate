@@ -1,0 +1,177 @@
+
+
+Project Name: WorldNarrator
+
+Purpose:
+WorldNarrator is an AI system that converts printed text from camera images into contextual narrated audio experiences using multimodal AI models and expressive speech synthesis.
+
+Core pipeline:
+Camera Image → Image Processing → Document Intelligence → Narration Director → Voice Generation → Streaming Audio.
+
+The project must be structured using modern best practices including modular services, clear separation of concerns, and scalability.
+
+TECH STACK
+
+Frontend
+
+* React Native or Flutter mobile app
+* Camera capture
+* Audio playback
+* Simple UI for scanning and narration
+
+Backend
+
+* Python
+* FastAPI for API services
+* Async architecture
+* Microservice pattern
+
+AI Services
+
+* Multimodal vision processing (Gemini compatible)
+* Narration Director LLM
+* Voice generation (ElevenLabs compatible)
+
+Infrastructure
+
+* Docker containers
+* Kubernetes-ready
+* Redis caching
+* PostgreSQL
+* Object storage (S3 compatible)
+
+PROJECT STRUCTURE
+
+Create the following repository structure:
+
+/world-narrator
+/apps
+/mobile
+/components
+/screens
+/services
+/assets
+/services
+/api-gateway
+/image-processor
+/document-intelligence
+/narration-director
+/voice-synthesis
+/audio-streamer
+/ai
+/prompts
+/pipelines
+/models
+/infra
+/docker
+/kubernetes
+/terraform
+/shared
+/schemas
+/utils
+/config
+/docs
+/architecture
+/api
+/prompts
+/scripts
+README.md
+
+SERVICE RESPONSIBILITIES
+
+api-gateway
+Handles authentication, routing, rate limiting, and API entry.
+
+image-processor
+Handles image preprocessing including cropping, rotation, contrast enhancement, and noise reduction.
+
+document-intelligence
+Uses multimodal models to extract structured information from images including text segments, dialogue, and layout.
+
+narration-director
+Transforms structured text into narration instructions including tone, pacing, voice assignments, and emotional direction.
+
+voice-synthesis
+Interfaces with speech synthesis APIs to convert narration segments into audio files.
+
+audio-streamer
+Streams generated audio to the client with low latency.
+
+DATA FLOW
+
+User captures image → image uploaded → preprocessing → document analysis → narration strategy → voice generation → streaming audio.
+
+FILES TO GENERATE
+
+Create initial boilerplate files including:
+
+* FastAPI service templates for each backend service
+* Dockerfiles for each service
+* docker-compose setup for local development
+* Kubernetes deployment manifests
+* example AI prompt templates
+* API endpoint stubs
+* logging and monitoring hooks
+* config management
+
+CODING STANDARDS
+
+Follow these rules strictly:
+
+* Use clean architecture principles
+* Use dependency injection
+* Write modular, testable code
+* Use async processing where possible
+* Provide type hints
+* Include logging and error handling
+* Include docstrings and documentation
+
+OUTPUT FORMAT
+
+Generate:
+
+1. The full folder tree
+2. Boilerplate code for each service
+3. Example prompt templates
+4. API endpoint stubs
+5. Local development instructions
+
+The goal is to produce a complete project bootstrap that a development team could immediately begin building on.
+
+---
+
+# Why This Prompt Works
+
+It forces the AI to:
+
+• create **real architecture instead of random files**
+• separate services cleanly
+• include infrastructure from the start
+• generate reusable AI pipelines
+
+That avoids the most common problem with AI-generated projects: **monolithic spaghetti code**.
+
+---
+
+# One Important Strategic Advice
+
+For your **first working prototype**, do **not build all services immediately**.
+
+Collapse them temporarily into:
+
+```
+api
+vision
+narration
+tts
+```
+
+Get the pipeline working first.
+
+Then split into microservices once the logic stabilizes.
+
+That saves weeks of unnecessary engineering.
+
+---
+
+A curious observation about your project: the **Narration Director** service will likely become the most valuable component. Most teams can build OCR pipelines, but very few build **AI systems that understand storytelling structure and direct audio performance**. That piece is where the intellectual leverage lives.

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-processor
+  namespace: world-narrator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: image-processor
+  template:
+    metadata:
+      labels:
+        app: image-processor
+    spec:
+      containers:
+        - name: image-processor
+          image: world-narrator/image-processor:latest
+          ports:
+            - containerPort: 8001
+          env:
+            - name: SERVICE_NAME
+              value: image-processor
+            - name: PORT
+              value: "8001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-processor
+  namespace: world-narrator
+spec:
+  selector:
+    app: image-processor
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001

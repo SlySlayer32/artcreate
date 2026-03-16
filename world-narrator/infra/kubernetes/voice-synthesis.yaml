@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voice-synthesis
+  namespace: world-narrator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: voice-synthesis
+  template:
+    metadata:
+      labels:
+        app: voice-synthesis
+    spec:
+      containers:
+        - name: voice-synthesis
+          image: world-narrator/voice-synthesis:latest
+          ports:
+            - containerPort: 8004
+          env:
+            - name: SERVICE_NAME
+              value: voice-synthesis
+            - name: PORT
+              value: "8004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voice-synthesis
+  namespace: world-narrator
+spec:
+  selector:
+    app: voice-synthesis
+  ports:
+    - protocol: TCP
+      port: 8004
+      targetPort: 8004

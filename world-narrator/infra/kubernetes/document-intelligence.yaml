@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-intelligence
+  namespace: world-narrator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: document-intelligence
+  template:
+    metadata:
+      labels:
+        app: document-intelligence
+    spec:
+      containers:
+        - name: document-intelligence
+          image: world-narrator/document-intelligence:latest
+          ports:
+            - containerPort: 8002
+          env:
+            - name: SERVICE_NAME
+              value: document-intelligence
+            - name: PORT
+              value: "8002"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-intelligence
+  namespace: world-narrator
+spec:
+  selector:
+    app: document-intelligence
+  ports:
+    - protocol: TCP
+      port: 8002
+      targetPort: 8002

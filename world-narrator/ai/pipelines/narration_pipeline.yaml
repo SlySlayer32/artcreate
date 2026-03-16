@@ -1,0 +1,18 @@
+name: narration_pipeline
+version: 0.1.0
+steps:
+  - id: image_preprocess
+    service: image-processor
+    endpoint: /v1/process
+  - id: document_analysis
+    service: document-intelligence
+    endpoint: /v1/analyze
+  - id: narration_plan
+    service: narration-director
+    endpoint: /v1/plan
+  - id: voice_synthesis
+    service: voice-synthesis
+    endpoint: /v1/synthesize
+  - id: audio_stream
+    service: audio-streamer
+    endpoint: /v1/stream/{audio_id}

@@ -1,0 +1,11 @@
+version: 1
+formatters:
+  json:
+    (): shared.logging.JsonFormatter
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: json
+root:
+  level: INFO
+  handlers: [console]

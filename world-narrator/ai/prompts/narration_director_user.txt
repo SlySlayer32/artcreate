@@ -1,0 +1,8 @@
+Input document analysis:
+{{document_analysis_json}}
+
+Instructions:
+- Use strategy_mode: fiction | textbook | recipe | manual
+- Assign voices per speaker
+- Set pace: slow | medium | fast
+- Set tone: calm | tense | upbeat | reflective | neutral

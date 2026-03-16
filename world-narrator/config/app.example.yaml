@@ -1,0 +1,19 @@
+service:
+  env: local
+  log_level: INFO
+
+postgres:
+  dsn: postgresql+asyncpg://world:world@localhost:5432/world_narrator
+
+redis:
+  url: redis://localhost:6379/0
+
+s3:
+  endpoint_url: http://localhost:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: world-narrator
+
+ai:
+  gemini_api_key: ""
+  elevenlabs_api_key: ""
