@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
+from shared.schemas.pipeline import ImageReference
+
 
 class ImageProcessRequest(BaseModel):
-    filename: str
-    content_type: str | None = None
-    size_bytes: int
+    image: ImageReference

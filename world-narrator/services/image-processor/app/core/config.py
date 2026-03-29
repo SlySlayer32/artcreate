@@ -4,14 +4,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    service_name: str = "image-processor"
-    env: str = "local"
-    log_level: str = "INFO"
+    service_name: str = 'image-processor'
+    env: str = 'local'
+    log_level: str = 'INFO'
     port: int = 8001
+    max_dimension_px: int = 1600
 
-    s3_bucket: str = "world-narrator"
-
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file='.env', extra='ignore')
 
 
 @lru_cache
