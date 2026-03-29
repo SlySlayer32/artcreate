@@ -10,12 +10,15 @@ def get_prompt_repo(settings: Settings = Depends(get_settings)) -> PromptReposit
     return PromptRepository(settings.prompt_dir)
 
 
-def get_llm_client() -> LlmClient:
-    return LlmClient()
+def get_llm_client(settings: Settings = Depends(get_settings)) -> LlmClient | None:
+    if not settings.enable_real_providers:
+        return None
+    return LlmClient(settings)
 
 
 def get_narration_planner(
     repo: PromptRepository = Depends(get_prompt_repo),
-    llm_client: LlmClient = Depends(get_llm_client),
+    settings: Settings = Depends(get_settings),
+    llm_client: LlmClient | None = Depends(get_llm_client),
 ) -> NarrationPlanner:
-    return NarrationPlanner(repo, llm_client)
+    return NarrationPlanner(repo, llm_client, settings)

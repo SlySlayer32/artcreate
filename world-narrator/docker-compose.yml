@@ -44,7 +44,9 @@ services:
       VOICE_SYNTHESIS_URL: http://voice-synthesis:8004
       AUDIO_STREAMER_URL: http://audio-streamer:8005
       ENABLE_MOCK_PIPELINE: "true"
+      ENABLE_REAL_PROVIDERS: "false"
       REQUIRE_API_KEY: "false"
+      PUBLIC_BASE_URL: http://localhost:8000
     ports:
       - "8000:8000"
     depends_on:

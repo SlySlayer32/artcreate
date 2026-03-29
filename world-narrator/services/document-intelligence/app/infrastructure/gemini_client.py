@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 from typing import Any
 
@@ -11,35 +10,30 @@ from app.core.config import Settings
 from shared.schemas.pipeline import ProviderMetrics
 
 
-class LlmClient:
-    """Gemini client for narration planning."""
-
+class GeminiVisionClient:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
 
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
-    async def generate(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        analysis: dict[str, Any],
-    ) -> tuple[dict[str, Any], ProviderMetrics]:
+    async def analyze_image(self, image_b64: str, mime_type: str, prompt: str) -> tuple[dict[str, Any], ProviderMetrics]:
         if not self._settings.gemini_api_key:
             raise RuntimeError('GEMINI_API_KEY is required when real providers are enabled')
+
         started = time.perf_counter()
         url = (
             'https://generativelanguage.googleapis.com/v1beta/models/'
             f'{self._settings.gemini_model}:generateContent?key={self._settings.gemini_api_key}'
         )
-        prompt_text = (
-            f"{system_prompt}\n\n{user_prompt}\n\n"
-            'Return strict JSON with key segments. '
-            'Each segment needs segment_id, text, voice, tone, pace, emphasis, '
-            'pause_before_sec, pause_after_sec.\n\n'
-            f'{json.dumps(analysis)}'
-        )
         payload = {
-            'contents': [{'role': 'user', 'parts': [{'text': prompt_text}]}],
+            'contents': [
+                {
+                    'role': 'user',
+                    'parts': [
+                        {'text': prompt},
+                        {'inline_data': {'mime_type': mime_type, 'data': image_b64}},
+                    ],
+                }
+            ],
             'generationConfig': {'response_mime_type': 'application/json'},
         }
         timeout = httpx.Timeout(self._settings.provider_timeout_sec)
@@ -47,16 +41,18 @@ class LlmClient:
             response = await client.post(url, json=payload)
             response.raise_for_status()
             body = response.json()
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        text = body['candidates'][0]['content']['parts'][0]['text']
         usage = body.get('usageMetadata', {})
         provider = ProviderMetrics(
             provider='gemini',
             model=self._settings.gemini_model,
-            prompt_version='narration_director_v1',
+            prompt_version='document_intelligence_system_v1',
             request_id=response.headers.get('x-request-id'),
-            latency_ms=int((time.perf_counter() - started) * 1000),
+            latency_ms=latency_ms,
             input_tokens=usage.get('promptTokenCount'),
             output_tokens=usage.get('candidatesTokenCount'),
             metadata={'finish_reason': body['candidates'][0].get('finishReason')},
         )
-        text = body['candidates'][0]['content']['parts'][0]['text']
+        import json
         return json.loads(text), provider
